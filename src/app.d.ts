@@ -106,5 +106,8 @@ export type HookMessageDataType = {
   mechanism?: string;
   device?: string;
   os?: string;
+  browser?: string;
+  runtime?: string;
+  url?: string;
   detailLink?: string;
 };
