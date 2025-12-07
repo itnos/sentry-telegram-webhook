@@ -84,13 +84,14 @@ export class AppController {
           webUrl = error.web_url || '';
 
           // Извлекаем имя проекта из issue_url или url
-          if (error.issue_url) {
-            const match = error.issue_url.match(/\/projects\/([^/]+)\/([^/]+)\//);
+          if (error.url) {
+            const match = error.url.match(/\/projects\/([^/]+)\/([^/]+)\//);
             if (match) {
-              projectName = match[2];
+              projectName = match[2]; // sit30-php
               projectSlug = match[2];
             }
           }
+          
 
           // Извлекаем данные из contexts
           const contexts = error.contexts || {};
