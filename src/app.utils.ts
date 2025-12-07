@@ -41,7 +41,7 @@ export function generateHookMessageRu(data: HookMessageDataType) {
 \\- *Версия:* ${_data.release || 'none'}
 \\- *Устройство:* ${_data.device || 'none'}
 \\- *ОС:* ${_data.os || 'none'}
-*Подробнее:* [ТУТ](${_data.detailLink})
+*Подробнее:* [ЗДЕСЬ](${_data.detailLink})
   `;
 }
 
