@@ -35,16 +35,16 @@ export class AppController {
     const running = async () => {
       try {
         this.logger.info(reqBody);
-
         const action = reqBody.action;
         const data = reqBody.data;
 
         let title: string;
         let culprit: string;
-        let projectName: string;
-        let projectSlug: string;
+        let projectName: string = 'Unknown';
+        let projectSlug: string = '';
         let issueId: string;
         let webUrl: string;
+        let issueDetails: any = {};
 
         // Handle different event types
         if (data.issue) {
@@ -54,23 +54,73 @@ export class AppController {
           projectName = data.issue.project?.name || 'Unknown';
           projectSlug = data.issue.project?.slug || '';
           issueId = data.issue.id;
-          webUrl = data.issue.web_url || '';
+          webUrl = data.issue.web_url || data.issue.permalink || '';
+
+          // Try to get issue details from API
+          try {
+            if (issueId) {
+              issueDetails = await this.appService.getIssueDetail(issueId);
+            }
+          } catch (ex) {
+            this.logger.warn('Failed to get issue details, continuing without them');
+          }
+
         } else if (data.event) {
           // event_alert.triggered
-          title = data.event.title;
-          culprit = data.event.culprit;
-          projectName = data.event.project?.name || 'Unknown';
-          projectSlug = data.event.project?.slug || '';
-          issueId = data.event.issue_id;
-          webUrl = data.event.web_url || '';
+          const event = data.event as any;
+          title = event.title;
+          culprit = event.culprit;
+          projectName = event.project?.name || 'Unknown';
+          projectSlug = event.project?.slug || '';
+          issueId = event.issue_id;
+          webUrl = event.web_url || '';
+
         } else if (data.error) {
-          // error.created
-          title = data.error.title;
-          culprit = data.error.culprit;
-          projectName = 'Unknown';
-          projectSlug = '';
-          issueId = data.error.issue_id;
-          webUrl = data.error.web_url || '';
+          // error.created - самый подробный тип
+          const error = data.error as any;
+          title = error.title;
+          culprit = error.culprit;
+          issueId = error.issue_id;
+          webUrl = error.web_url || '';
+
+          // Извлекаем имя проекта из issue_url или url
+          if (error.issue_url) {
+            const match = error.issue_url.match(/\/projects\/([^/]+)\/([^/]+)\//);
+            if (match) {
+              projectName = match[2];
+              projectSlug = match[2];
+            }
+          }
+
+          // Извлекаем данные из contexts
+          const contexts = error.contexts || {};
+          const exception = error.exception?.values?.[0];
+          const frame = exception?.stacktrace?.frames?.slice(-1)[0]; // последний фрейм - место ошибки
+
+          // Позиция с полным путём и номером строки
+          if (frame) {
+            const filename = frame.abs_path || frame.filename || 'unknown';
+            const lineno = frame.lineno || '?';
+            const func = frame.function && frame.function !== '?' ? ` in ${frame.function}` : '';
+            culprit = `${filename}:${lineno}${func}`;
+          }
+
+          // Формируем issueDetails из данных error
+          issueDetails = {
+            environment: error.environment || 'unknown',
+            release: error.release || 'none',
+            dist: error.dist || '',
+            level: error.level || 'error',
+            handled: exception?.mechanism?.handled !== false ? 'yes' : 'no',
+            mechanism: exception?.mechanism?.type || '',
+            device: contexts.device?.family || contexts.device?.model || '',
+            os: this.formatOs(contexts),
+            user: this.formatUser(error.user),
+            browser: contexts.browser?.browser || '',
+            runtime: contexts.runtime?.runtime || '',
+            url: error.request?.url || '',
+          };
+
         } else {
           this.logger.info('Unknown event structure, skipping');
           return;
@@ -81,16 +131,6 @@ export class AppController {
             `This app slug "${projectSlug}" is not allowed for push notifications`,
           );
           return;
-        }
-
-        // Try to get issue details, but don't fail if it doesn't work
-        let issueDetails = {};
-        try {
-          if (issueId) {
-            issueDetails = await this.appService.getIssueDetail(issueId);
-          }
-        } catch (ex) {
-          this.logger.warn('Failed to get issue details, continuing without them');
         }
 
         const hookMessageData: HookMessageDataType = {
@@ -111,5 +151,28 @@ export class AppController {
 
     running();
     return reqBody.installation || { message: 'success' };
+  }
+
+  private formatOs(contexts: any): string {
+    // Приоритет: серверная ОС, потом клиентская
+    const serverOs = contexts.os;
+    const clientOs = contexts.client_os;
+    
+    const parts: string[] = [];
+    
+    if (serverOs?.name) {
+      parts.push(`${serverOs.name} ${serverOs.version || ''}`.trim());
+    }
+    
+    if (clientOs?.name && clientOs.name !== serverOs?.name) {
+      parts.push(`Client: ${clientOs.name} ${clientOs.version || ''}`.trim());
+    }
+    
+    return parts.join(', ') || '';
+  }
+
+  private formatUser(user: any): string {
+    if (!user) return '';
+    return user.email || user.username || user.id || '';
   }
 }
