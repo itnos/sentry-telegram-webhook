@@ -62,9 +62,10 @@ export class AppController {
               issueDetails = await this.appService.getIssueDetail(issueId);
             }
           } catch (ex) {
-            this.logger.warn('Failed to get issue details, continuing without them');
+            this.logger.warn(
+              'Failed to get issue details, continuing without them',
+            );
           }
-
         } else if (data.event) {
           // event_alert.triggered
           const event = data.event as any;
@@ -97,7 +98,10 @@ export class AppController {
           if (frame) {
             const filename = frame.abs_path || frame.filename || 'unknown';
             const lineno = frame.lineno || '?';
-            const func = frame.function && frame.function !== '?' ? ` in ${frame.function}` : '';
+            const func =
+              frame.function && frame.function !== '?'
+                ? ` in ${frame.function}`
+                : '';
             culprit = `${filename}:${lineno}${func}`;
           }
 
@@ -116,7 +120,6 @@ export class AppController {
             runtime: contexts.runtime?.runtime || '',
             url: event.request?.url || '',
           };
-
         } else if (data.error) {
           // error.created - the most detailed type
           const error = data.error as any;
@@ -133,7 +136,6 @@ export class AppController {
               projectSlug = match[2];
             }
           }
-          
 
           // Extracting data from contexts
           const contexts = error.contexts || {};
@@ -144,7 +146,10 @@ export class AppController {
           if (frame) {
             const filename = frame.abs_path || frame.filename || 'unknown';
             const lineno = frame.lineno || '?';
-            const func = frame.function && frame.function !== '?' ? ` in ${frame.function}` : '';
+            const func =
+              frame.function && frame.function !== '?'
+                ? ` in ${frame.function}`
+                : '';
             culprit = `${filename}:${lineno}${func}`;
           }
 
@@ -163,7 +168,6 @@ export class AppController {
             runtime: contexts.runtime?.runtime || '',
             url: error.request?.url || '',
           };
-
         } else {
           this.logger.info('Unknown event structure, skipping');
           return;
@@ -181,7 +185,9 @@ export class AppController {
           appName: projectName,
           title: title,
           errorPosition: culprit,
-          detailLink: webUrl || `${process.env.SENTRY_URL}/organizations/${process.env.SENTRY_ORGANIZATION_SLUG}/issues/${issueId}/`,
+          detailLink:
+            webUrl ||
+            `${process.env.SENTRY_URL}/organizations/${process.env.SENTRY_ORGANIZATION_SLUG}/issues/${issueId}/`,
           ...issueDetails,
         };
 
@@ -200,17 +206,17 @@ export class AppController {
     // Priority: server OS, then client OS
     const serverOs = contexts.os;
     const clientOs = contexts.client_os;
-    
+
     const parts: string[] = [];
-    
+
     if (serverOs?.name) {
       parts.push(`${serverOs.name} ${serverOs.version || ''}`.trim());
     }
-    
+
     if (clientOs?.name && clientOs.name !== serverOs?.name) {
       parts.push(`Client: ${clientOs.name} ${clientOs.version || ''}`.trim());
     }
-    
+
     return parts.join(', ') || '';
   }
 

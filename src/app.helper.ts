@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { HookMessageDataType } from './app';
-import { generateHookMessageEn, generateHookMessageVi, generateHookMessageRu } from './app.utils';
+import {
+  generateHookMessageEn,
+  generateHookMessageVi,
+  generateHookMessageRu,
+} from './app.utils';
 
 @Injectable()
 export class AppHelper {
