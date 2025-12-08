@@ -29,41 +29,54 @@ export type SentryMetadataType = {
   initial_priority: number;
 };
 
+export type SentryEventType = {
+  title?: string;
+  culprit?: string;
+  project?: SentryProjectType;
+  issue_id?: string;
+  web_url?: string;
+};
+
+export type SentryIssueType = {
+  id: string;
+  shareId: string;
+  shortId: string;
+  title: string;
+  culprit: string;
+  permalink: string;
+  logger: string;
+  level: string;
+  status: string;
+  statusDetails: any;
+  substatus: string;
+  isPublic: boolean;
+  platform: string;
+  project: SentryProjectType;
+  type: string;
+  metadata: SentryMetadataType;
+  numComments: number;
+  assignedTo: string;
+  isBookmarked: boolean;
+  isSubscribed: boolean;
+  subscriptionDetails: string;
+  hasSeen: boolean;
+  annotations: any;
+  issueType: string;
+  issueCategory: string;
+  priority: string;
+  priorityLockedAt: string;
+  isUnhandled: boolean;
+  count: string;
+  userCount: number;
+  firstSeen: string;
+  lastSeen: string;
+  web_url?: string;
+};
+
 export type SentryRequestDataType = {
-  issue: {
-    id: string;
-    shareId: string;
-    shortId: string;
-    title: string;
-    culprit: string;
-    permalink: string;
-    logger: string;
-    level: string;
-    status: string;
-    statusDetails: any;
-    substatus: string;
-    isPublic: boolean;
-    platform: string;
-    project: SentryProjectType;
-    type: string;
-    metadata: SentryMetadataType;
-    numComments: number;
-    assignedTo: string;
-    isBookmarked: boolean;
-    isSubscribed: boolean;
-    subscriptionDetails: string;
-    hasSeen: boolean;
-    annotations: any;
-    issueType: string;
-    issueCategory: string;
-    priority: string;
-    priorityLockedAt: string;
-    isUnhandled: boolean;
-    count: string;
-    userCount: number;
-    firstSeen: string;
-    lastSeen: string;
-  };
+  issue?: SentryIssueType;
+  event?: SentryEventType;
+  error?: SentryEventType;
 };
 
 export type SentryActorType = {
@@ -93,5 +106,8 @@ export type HookMessageDataType = {
   mechanism?: string;
   device?: string;
   os?: string;
+  browser?: string;
+  runtime?: string;
+  url?: string;
   detailLink?: string;
 };
